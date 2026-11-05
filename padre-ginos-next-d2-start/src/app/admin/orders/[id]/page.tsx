@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getOrder } from "@/lib/admin-data";
 import { formatPrice } from "@/lib/format";
 import StatusBadge from "@/components/admin/StatusBadge";
+import StatusActions from "@/components/admin/StatusActions";
 
 type OrderDetailPageProps = {
 	params: Promise<{
@@ -45,6 +46,8 @@ export default async function OrderDetailPage({
 
 				<StatusBadge status={order.status} />
 			</div>
+
+			<StatusActions orderId={order.id} status={order.status} />
 
 			<div className="mt-8 rounded-xl bg-white p-5 shadow-sm">
 				<h2 className="text-lg font-bold">Detail pesanan</h2>

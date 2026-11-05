@@ -1,12 +1,17 @@
 "use server";
 
-import { updateTag } from "next/cache";
+import { refresh, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
-import { updatePizzaPrices } from "@/lib/admin-data";
+import {
+	getOrderStatus,
+	setOrderStatus,
+	updatePizzaPrices,
+} from "@/lib/admin-data";
 import { pizzaExists } from "@/lib/data";
 import { shouldFail, simulateLatency } from "@/lib/demo";
 import { parsePrice } from "@/lib/format";
 import type { PizzaSize } from "@/lib/types";
+import { canTransition, isOrderStatus, type OrderStatus } from "@/lib/orders";
 
 const SIZES: PizzaSize[] = ["S", "M", "L"];
 
@@ -61,4 +66,62 @@ export async function updatePricesAction(
 	// expire them now so customers see the new price on their next request
 	updateTag("menu");
 	redirect(`/admin/products?updated=${id}`);
+}
+
+export type StatusFormState = {
+	error: string;
+} | null;
+
+export async function updateOrderStatusAction(
+	_prev: StatusFormState,
+	formData: FormData,
+): Promise<StatusFormState> {
+	const rawId = formData.get("id");
+	const rawStatus = formData.get("status");
+
+	// Validasi ID order
+	if (
+		typeof rawId !== "string" ||
+		!/^\d+$/.test(rawId) ||
+		!Number.isSafeInteger(Number(rawId)) ||
+		Number(rawId) <= 0
+	) {
+		return { error: "ID order tidak valid." };
+	}
+
+	const orderId = Number(rawId);
+
+	// Validasi status tujuan
+	if (!isOrderStatus(rawStatus)) {
+		return { error: "Status tujuan tidak valid." };
+	}
+
+	// Ambil status aktual dari database, bukan dari form
+	const currentStatus = await getOrderStatus(orderId);
+
+	if (currentStatus === null) {
+		return { error: "Order tidak ditemukan." };
+	}
+
+	// Server tetap memvalidasi meskipun tombol browser dimanipulasi
+	if (!canTransition(currentStatus, rawStatus)) {
+		return {
+			error: `Perubahan dari ${currentStatus} ke ${rawStatus} tidak diizinkan.`,
+		};
+	}
+
+	await simulateLatency("write");
+
+	if (await shouldFail()) {
+		return {
+			error: "Simulasi gagal server. Status order tidak berhasil diperbarui.",
+		};
+	}
+
+	await setOrderStatus(orderId, rawStatus);
+
+	// Data order tidak menggunakan cache, jadi cukup refresh halaman.
+	refresh();
+
+	return null;
 }
