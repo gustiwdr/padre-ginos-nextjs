@@ -11,7 +11,7 @@ import { pizzaExists } from "@/lib/data";
 import { shouldFail, simulateLatency } from "@/lib/demo";
 import { parsePrice } from "@/lib/format";
 import type { PizzaSize } from "@/lib/types";
-import { canTransition, isOrderStatus, type OrderStatus } from "@/lib/orders";
+import { canTransition, isOrderStatus } from "@/lib/orders";
 
 const SIZES: PizzaSize[] = ["S", "M", "L"];
 

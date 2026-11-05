@@ -3,6 +3,7 @@ import { all, get, run } from "./db";
 import { failReadIfSimulated, simulateLatency } from "./demo";
 import type { OrderStatus } from "./orders";
 import type { PizzaSize } from "./types";
+import { cacheLife } from "next/cache";
 
 // Data access for the staff dashboard (/admin).
 // Nothing here is cached: staff should always see the current state.
@@ -176,8 +177,13 @@ export async function getLatestDay(): Promise<{
 export async function getTopPizzas(): Promise<
 	{ id: string; name: string; sold: number; revenue: number }[]
 > {
+	"use cache";
+
+	cacheLife("hours");
+
 	await simulateLatency("read");
 	await new Promise((resolve) => setTimeout(resolve, 1500));
+
 	return all(
 		`SELECT t.pizza_type_id AS id, t.name, SUM(d.quantity) AS sold,
             ROUND(SUM(d.quantity * p.price), 2) AS revenue
