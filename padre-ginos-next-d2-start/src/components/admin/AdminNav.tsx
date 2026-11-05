@@ -9,16 +9,16 @@ const LINKS = [
 	{ href: "/admin/orders", label: "Order" },
 ];
 
-export default function AdminNav() {
-	const pathname = usePathname();
-
+function NavLinks({ pathname }: { pathname: string | null }) {
 	return (
 		<nav className="flex flex-col gap-1 px-3">
 			{LINKS.map(({ href, label }) => {
 				const active =
-					href === "/admin"
+					pathname !== null &&
+					(href === "/admin"
 						? pathname === href
-						: pathname === href || pathname.startsWith(`${href}/`);
+						: pathname === href || pathname.startsWith(`${href}/`));
+
 				return (
 					<Link
 						key={href}
@@ -36,4 +36,12 @@ export default function AdminNav() {
 			})}
 		</nav>
 	);
+}
+
+export default function AdminNav() {
+	return <NavLinks pathname={usePathname()} />;
+}
+
+export function AdminNavFallback() {
+	return <NavLinks pathname={null} />;
 }

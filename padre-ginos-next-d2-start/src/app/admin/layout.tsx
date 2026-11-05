@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import AdminNav from "@/components/admin/AdminNav";
+import { Suspense } from "react";
+import AdminNav, { AdminNavFallback } from "@/components/admin/AdminNav";
 import FailureToggle from "@/components/FailureToggle";
 
 export const metadata: Metadata = {
@@ -21,7 +22,9 @@ export default function AdminLayout({
 						Dashboard staf
 					</span>
 				</Link>
-				<AdminNav />
+				<Suspense fallback={<AdminNavFallback />}>
+					<AdminNav />
+				</Suspense>
 				<div className="mt-auto flex flex-col gap-3 px-6 py-5 text-sm text-white/70">
 					<FailureToggle />
 					<Link href="/" className="hover:text-white">
